@@ -1,0 +1,112 @@
+# =====================================================
+# StudyNotion LMS — Full Stack Docker Compose
+# Exactly like flow project structure
+#
+# Services:
+#   1. postgres     — PostgreSQL database
+#   2. backend      — Spring Boot (Java 17)
+#   3. frontend     — React + Nginx
+#
+# Run everything:  docker compose up --build
+# Stop:            docker compose down
+# =====================================================
+
+version: '3.8'
+
+services:
+
+  # ─── 1. PostgreSQL Database ───────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: studynotion-postgres
+    environment:
+      POSTGRES_DB: studynotion
+      POSTGRES_USER: studynotion_user
+      POSTGRES_PASSWORD: studynotion_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studynotion_user -d studynotion"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - studynotion-network
+
+  # ─── 2. Spring Boot Backend ───────────────────────
+  studynotion-backend:
+    build:
+      context: ./studynotion-backend
+      dockerfile: Dockerfile
+    container_name: studynotion-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Database — connects to postgres container above
+      DATABASE_URL: jdbc:postgresql://postgres:5432/studynotion
+      DB_USERNAME: studynotion_user
+      DB_PASSWORD: studynotion_pass
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-studynotion-super-secret-key-minimum-32-chars-2024}
+
+      # Email (Gmail SMTP) — set in .env file
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+
+      # Cloudinary — set in .env file
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+
+      # Razorpay — set in .env file
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+
+      # Google Gemini AI — set in .env file
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+
+      # Frontend URL for CORS
+      FRONTEND_URL: http://localhost:3000
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/api/v1/course/getAllCourses || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - studynotion-network
+
+  # ─── 3. React Frontend (Nginx) ────────────────────
+  studynotion-frontend:
+    build:
+      context: ./studynotion-frontend
+      dockerfile: Dockerfile
+      args:
+        # In Docker: API calls proxied via nginx → backend container
+        REACT_APP_BASE_URL: /api/v1
+    container_name: studynotion-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      studynotion-backend:
+        condition: service_healthy
+    networks:
+      - studynotion-network
+
+# ─── Volumes & Networks ────────────────────────────
+volumes:
+  postgres-data:
+    name: studynotion-postgres-data
+
+networks:
+  studynotion-network:
+    driver: bridge
+    name: studynotion-network
+

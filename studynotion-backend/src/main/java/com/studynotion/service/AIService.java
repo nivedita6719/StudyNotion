@@ -6,13 +6,16 @@ import com.studynotion.dto.response.ApiResponse;
 import com.studynotion.entity.Course;
 import com.studynotion.entity.User;
 import com.studynotion.exception.AppException;
+import com.studynotion.entity.Section;
 import com.studynotion.repository.CourseRepository;
+import com.studynotion.repository.SectionRepository;
 import com.studynotion.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 public class AIService {
 
     private final CourseRepository courseRepository;
+    private final SectionRepository sectionRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
@@ -76,6 +80,7 @@ public class AIService {
     // ==========================================
     // FEATURE 2: Smart Course Recommendations
     // ==========================================
+    @Transactional(readOnly = true)
     public ApiResponse<List<Map<String, Object>>> getSmartRecommendations(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException("User not found", 404));
@@ -169,6 +174,7 @@ public class AIService {
     // ==========================================
     // FEATURE 3: In-Course AI Chatbot
     // ==========================================
+    @Transactional(readOnly = true)
     public ApiResponse<Map<String, Object>> askCourseChatbot(
             Long courseId, String question, List<Map<String, String>> chatHistory) {
 
@@ -227,6 +233,7 @@ public class AIService {
     // ==========================================
     // FEATURE 4: Auto Quiz Generator
     // ==========================================
+    @Transactional(readOnly = true)
     public ApiResponse<Map<String, Object>> generateQuiz(
             Long sectionId, String difficulty, int questionCount) {
 
@@ -347,21 +354,16 @@ public class AIService {
     }
 
     private String getSectionContent(Long sectionId) {
-        return courseRepository.findAll().stream()
-                .flatMap(c -> c.getCourseContent().stream())
-                .filter(s -> s.getId().equals(sectionId))
-                .map(section -> {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("Section: ").append(section.getSectionName()).append("\n");
-                    section.getSubSections().forEach(sub -> {
-                        sb.append("Lecture: ").append(sub.getTitle()).append("\n");
-                        if (sub.getDescription() != null) {
-                            sb.append("Content: ").append(sub.getDescription()).append("\n");
-                        }
-                    });
-                    return sb.toString();
-                })
-                .findFirst()
-                .orElse("");
+        Section section = sectionRepository.findById(sectionId).orElse(null);
+        if (section == null) return "";
+        StringBuilder sb = new StringBuilder();
+        sb.append("Section: ").append(section.getSectionName()).append("\n");
+        section.getSubSections().forEach(sub -> {
+            sb.append("Lecture: ").append(sub.getTitle()).append("\n");
+            if (sub.getDescription() != null) {
+                sb.append("Content: ").append(sub.getDescription()).append("\n");
+            }
+        });
+        return sb.toString();
     }
 }

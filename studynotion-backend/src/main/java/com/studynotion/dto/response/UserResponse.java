@@ -9,6 +9,8 @@ import lombok.*;
 @Builder
 public class UserResponse {
     private Long id;
+    /** Alias so the React app's {@code user._id} references keep working. */
+    private Long _id;
     private String firstName;
     private String lastName;
     private String email;
@@ -22,6 +24,7 @@ public class UserResponse {
     public static UserResponse from(User user) {
         return UserResponse.builder()
                 .id(user.getId())
+                ._id(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())

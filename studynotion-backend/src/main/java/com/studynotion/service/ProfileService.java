@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class ProfileService {
 
     private final UserRepository userRepository;
+    private final CourseRepository courseRepository;
     private final CourseProgressRepository progressRepository;
     private final CloudinaryService cloudinaryService;
 
@@ -131,7 +132,8 @@ public class ProfileService {
                 .orElseThrow(() -> new AppException("Instructor not found",
                         404));
 
-        List<Map<String, Object>> courseStats = instructor.getCourses()
+        List<Course> instructorCourses = courseRepository.findByInstructor(instructor);
+        List<Map<String, Object>> courseStats = instructorCourses
                 .stream().map(course -> {
                     Map<String, Object> stat = new LinkedHashMap<>();
                     stat.put("id", course.getId());
@@ -169,7 +171,7 @@ public class ProfileService {
 
         Map<String, Object> dashboard = new LinkedHashMap<>();
         dashboard.put("courses", courseStats);
-        dashboard.put("totalCourses", instructor.getCourses().size());
+        dashboard.put("totalCourses", instructorCourses.size());
         dashboard.put("totalStudents", totalStudents);
         dashboard.put("totalRevenue", totalRevenue);
 

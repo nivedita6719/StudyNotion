@@ -1,0 +1,12 @@
+target/
+*.jar
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+.idea/
+*.iml
+HELP.md
+README.md
+COMPLETE_GUIDE.md

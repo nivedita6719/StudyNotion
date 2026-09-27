@@ -70,7 +70,8 @@ const CourseDetails = () => {
 
     useEffect (() => {
     if(courseDetail){
-        const Enrolled = courseDetail?.studentsEnrolled?.find((student) => student === user?._id);
+        const myId = user?.id ?? user?._id;
+        const Enrolled = courseDetail?.studentsEnrolled?.find((student) => String(student) === String(myId));
         // console.log("CourseDetails -> Enrolled", Enrolled)
         if(Enrolled){
             setAlreadyEnrolled(true);
@@ -170,7 +171,10 @@ const CourseDetails = () => {
                                 <p className='my-2 text-xl font-semibold '>This course includes</p>
                                 <div className='flex flex-col gap-1 text-sm text-caribbeangreen-100'>
                                     {
-                                        JSON.parse(courseDetail?.instructions).map((item,index) => (
+                                        (Array.isArray(courseDetail?.instructions)
+                                          ? courseDetail.instructions
+                                          : JSON.parse(courseDetail?.instructions || "[]")
+                                        ).map((item,index) => (
                                             <div key={index} className='flex gap-2 items-center'>
                                                 <span className='text-lg'>✓</span>
                                                 <span>{item}</span>

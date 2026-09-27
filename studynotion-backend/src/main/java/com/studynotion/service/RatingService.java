@@ -29,8 +29,8 @@ public class RatingService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException("Course not found", 404));
 
-        // Check if student is enrolled
-        if (!course.getStudentsEnrolled().contains(user)) {
+        // Check if student is enrolled (owning side of the M:N is User.courses)
+        if (!user.getCourses().contains(course)) {
             throw new AppException("You must be enrolled to rate this course", 403);
         }
 
@@ -57,6 +57,7 @@ public class RatingService {
         return ApiResponse.success("Rating submitted successfully", result);
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<Map<String, Object>> getAverageRating(Long courseId) {
         double avg = ratingRepository.findAverageRatingByCourseId(courseId).orElse(0.0);
         Map<String, Object> result = new HashMap<>();
@@ -65,6 +66,7 @@ public class RatingService {
         return ApiResponse.success("Average rating fetched", result);
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<List<Map<String, Object>>> getAllRatings() {
         List<RatingAndReview> ratings = ratingRepository.findTopRatings();
         List<Map<String, Object>> result = ratings.stream().map(r -> {

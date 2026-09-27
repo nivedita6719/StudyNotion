@@ -1,23 +1,37 @@
-# Environment variables — NEVER commit these
+# ── Secrets — NEVER commit ──────────────────────────────
 .env
+.env.*
+!.env.example
+**/.env
+!**/.env.example
+!studynotion-frontend/.env.production
 
-# Node
+# ── Node ────────────────────────────────────────────────
 node_modules/
-npm-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+studynotion-frontend/build/
+studynotion-frontend/coverage/
 
-# Java
+# ── Java / Maven ────────────────────────────────────────
 target/
 *.class
 *.jar
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+HELP.md
 
-# IDE
+# ── IDE ─────────────────────────────────────────────────
 .idea/
 .vscode/
 *.iml
+*.ipr
+*.iws
 
-# OS
+# ── OS ──────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# Docker
+# ── Docker ──────────────────────────────────────────────
 docker-compose.override.yml

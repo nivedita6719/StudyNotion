@@ -4,6 +4,7 @@ import com.studynotion.service.AIService;
 import com.studynotion.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/ai")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()") // AI calls consume paid quota — never anonymous
 public class AIController {
 
     private final AIService aiService;

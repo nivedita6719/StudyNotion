@@ -1,5 +1,6 @@
 package com.studynotion.controller;
 
+import com.studynotion.exception.AppException;
 import com.studynotion.service.PaymentService;
 import com.studynotion.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,26 +20,46 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping("/capturePayment")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> capturePayment(@RequestBody Map<String, Object> body) {
-        Long userId = SecurityUtils.getCurrentUserId();
-        @SuppressWarnings("unchecked")
-        List<Long> courseIds = (List<Long>) body.get("courses");
-        return ResponseEntity.ok(paymentService.capturePayment(courseIds, userId));
+        return ResponseEntity.ok(paymentService.capturePayment(
+                extractCourseIds(body), SecurityUtils.getCurrentUserId()));
     }
 
     @PostMapping("/verifyPayment")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> verifyPayment(@RequestBody Map<String, Object> body) {
-        Long userId = SecurityUtils.getCurrentUserId();
-        @SuppressWarnings("unchecked")
-        List<Long> courseIds = (List<Long>) body.get("courses");
         return ResponseEntity.ok(paymentService.verifyPaymentAndEnroll(
                 (String) body.get("razorpay_order_id"),
                 (String) body.get("razorpay_payment_id"),
                 (String) body.get("razorpay_signature"),
-                courseIds,
-                userId
-        ));
+                extractCourseIds(body),
+                SecurityUtils.getCurrentUserId()));
+    }
+
+    /** {@code courses} may be a JSON array of numbers/strings, or a single value. */
+    @SuppressWarnings("unchecked")
+    private static List<Long> extractCourseIds(Map<String, Object> body) {
+        Object raw = body.get("courses");
+        if (raw == null) raw = body.get("courseId");
+        List<Long> ids = new ArrayList<>();
+        if (raw instanceof List<?> list) {
+            for (Object o : list) ids.add(toLong(o));
+        } else if (raw != null) {
+            ids.add(toLong(raw));
+        }
+        if (ids.isEmpty()) {
+            throw new AppException("Please provide at least one course to purchase", 400);
+        }
+        return ids;
+    }
+
+    private static Long toLong(Object value) {
+        if (value instanceof Number n) return n.longValue();
+        if (value instanceof Map<?, ?> m) { // frontend sometimes sends whole course objects
+            Object id = m.containsKey("id") ? m.get("id") : m.get("_id");
+            return toLong(id);
+        }
+        return Long.parseLong(value.toString().trim());
     }
 }

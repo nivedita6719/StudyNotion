@@ -59,10 +59,10 @@ export const fetchCourseDetails = async (courseId, dispatch) => {
     if (!response.data.success) {
       throw new Error(response.data.message);
     }
-    result = response.data.data[0];
+    result = response.data.data;
   } catch (error) {
     console.log("COURSE_DETAILS_API API ERROR............", error);
-    result = error.response.data;
+    result = error?.response?.data;
     // toast.error(error.response.data.message);
   }
   // toast.dismiss(toastId)
@@ -147,7 +147,7 @@ export const createSection = async (data, token) => {
       throw new Error("Could Not Create Section");
     }
     toast.success("Course Section Created");
-    result = response?.data?.updatedCourse;
+    result = response?.data?.data;
     console.log("create API RESULT............", result);
   } catch (error) {
     console.log("CREATE SECTION API ERROR............", error);
@@ -192,7 +192,7 @@ export const updateSection = async (data, token) => {
       throw new Error("Could Not Update Section");
     }
     toast.success("Course Section Updated");
-    result = response?.data?.updatedCourse;
+    result = response?.data?.data;
     console.log("Update API RESULT............", result);
   } catch (error) {
     console.log("UPDATE SECTION API ERROR............", error);
@@ -237,7 +237,7 @@ export const deleteSection = async (data, token) => {
       throw new Error("Could Not Delete Section");
     }
     toast.success("Course Section Deleted");
-    result = response?.data?.updatedCourse;
+    result = response?.data?.data;
     console.log("Delete API RESULT............", result);
   } catch (error) {
     console.log("DELETE SECTION API ERROR............", error);

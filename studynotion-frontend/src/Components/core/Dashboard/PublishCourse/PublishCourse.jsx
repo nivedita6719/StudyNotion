@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { setCourse, setEditCourse, setStep } from '../../../../slices/courseSlice';
 import { COURSE_STATUS } from '../../../../utils/constants';
-import { addCourseToCategory, editCourseDetails } from '../../../../services/operations/courseDetailsAPI';
+import { editCourseDetails } from '../../../../services/operations/courseDetailsAPI';
 import toast from 'react-hot-toast';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -41,21 +41,17 @@ const PublishCourse = () => {
             return;
         }
         const formData = new FormData();
-        formData.append("courseId", course._id);
+        formData.append("courseId", course.id || course._id);
         formData.append("status", getValues("public") ? COURSE_STATUS.PUBLISHED : COURSE_STATUS.DRAFT);
         const result = await editCourseDetails(formData, token);
-        const category_id= await course.category;
-        console.log("category_id",category_id);
-        const addCourseCategory = await addCourseToCategory({categoryId:category_id,courseId:course._id},token);
-        if(result && addCourseCategory) {
+        if(result) {
+            dispatch(setStep(1));
+            dispatch(setEditCourse(null));
+            setLoading(false);
             goToMyCourses();
         } else {
+            setLoading(false);
             toast.error("Something went wrong");
-        }
-        if(addCourseCategory) {
-        dispatch(setStep(1));
-        dispatch(setEditCourse(null));
-        setLoading(false);
         }
     }
         

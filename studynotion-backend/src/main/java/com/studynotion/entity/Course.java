@@ -47,6 +47,8 @@ public class Course {
 
     private String thumbnail;
 
+    // Kept LAZY: every read path is @Transactional and the response builders copy
+    // these into detached lists before serialization (see CourseService).
     @ElementCollection
     @CollectionTable(name = "course_tags", joinColumns = @JoinColumn(name = "course_id"))
     @Column(name = "tag")

@@ -11,8 +11,6 @@
 # Stop:            docker compose down
 # =====================================================
 
-version: '3.8'
-
 services:
 
   # ─── 1. PostgreSQL Database ───────────────────────
@@ -69,13 +67,14 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY}
 
       # Frontend URL for CORS
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
 
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/api/v1/course/getAllCourses || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/api/v1/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

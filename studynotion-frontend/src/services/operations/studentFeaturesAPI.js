@@ -50,11 +50,12 @@ export async function buyCourse (token, courses, userDetails, navigate, dispatch
         return
     }
     console.log("buyCourse -> orderResponse", orderResponse)
+    const order = orderResponse.data.data;
     const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID,
-        currency: orderResponse.data.currency,
-        amount: orderResponse.data.amount.toString(),
-        order_id: orderResponse.data.orderId,
+        key: order.keyId || process.env.REACT_APP_RAZORPAY_KEY_ID,
+        currency: order.currency,
+        amount: `${order.amount}`,
+        order_id: order.orderId,
         name: "Study Notion",
         description: "Thank you for purchasing the course",
         image: rzplogo,
@@ -64,7 +65,7 @@ export async function buyCourse (token, courses, userDetails, navigate, dispatch
         },
         handler: async function (response) {
             console.log("buyCourse -> response", response)
-            sendPaymentSuccessEmail(response,orderResponse.data.amount,token);
+            // Enrollment + success email are both handled by the backend in verifyPayment.
             verifypament(response,courses,token,navigate,dispatch);
         },
         theme: {
@@ -87,25 +88,9 @@ export async function buyCourse (token, courses, userDetails, navigate, dispatch
 
 
 
-async function sendPaymentSuccessEmail (response,amount,token) {
-    // const data = {
-    //     amount,
-    //     paymentId: response.razorpay_payment_id,
-    //     orderId: response.razorpay_order_id,
-    //     signature: response.razorpay_signature,
-    // };
-    const res = await apiConnector("POST", SEND_PAYMENT_SUCCESS_EMAIL_API,{
-        amount,
-        paymentId:response.razorpay_payment_id,
-        orderId:response.razorpay_order_id,
-    }, {
-        Authorization: `Bearer ${token}`,
-    });
-    if (!res.success) {
-        console.log(res.message);
-        toast.error(res.message);
-    }
-}
+// Kept for backwards-compat with existing imports. The Spring backend sends the
+// payment-success email inside verifyPayment, so there is nothing to do here.
+async function sendPaymentSuccessEmail () {}
 
 async function verifypament (response,courses,token,navigate,dispatch,) {
     const toastId = toast.loading("Please wait while we verify your payment");

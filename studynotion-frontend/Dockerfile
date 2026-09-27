@@ -17,6 +17,9 @@ COPY . .
 ARG REACT_APP_BASE_URL=/api/v1
 ENV REACT_APP_BASE_URL=$REACT_APP_BASE_URL
 
+# CRA treats ESLint warnings as errors when CI=1 (some build platforms set this).
+ENV CI=false
+
 # Build for production
 RUN npm run build
 

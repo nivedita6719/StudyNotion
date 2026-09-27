@@ -1,0 +1,69 @@
+# =====================================================
+# Render Blueprint — StudyNotion backend + Postgres
+# Deploy: Render Dashboard → New → Blueprint → pick this repo.
+# The frontend is deployed separately on Vercel (see vercel.json).
+# =====================================================
+
+databases:
+  - name: studynotion-db
+    databaseName: studynotion
+    plan: free
+    # Render keeps free databases for 30 days — upgrade before going live.
+
+services:
+  - type: web
+    name: studynotion-backend
+    runtime: docker
+    plan: free
+    rootDir: studynotion-backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      # ── Database (wired from the managed Postgres above) ──
+      - key: DB_HOST
+        fromDatabase: { name: studynotion-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: studynotion-db, property: port }
+      - key: DB_NAME
+        fromDatabase: { name: studynotion-db, property: database }
+      - key: DB_USERNAME
+        fromDatabase: { name: studynotion-db, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: studynotion-db, property: password }
+
+      # ── Auth ──
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MS
+        value: "86400000"
+
+      # ── Secrets — set these in the Render dashboard (sync:false) ──
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+      # ── Frontend / CORS — set to your Vercel URL after that deploy ──
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+
+      # ── Runtime tuning ──
+      - key: JPA_DDL_AUTO
+        value: update
+      - key: LOG_LEVEL_APP
+        value: INFO

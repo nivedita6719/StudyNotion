@@ -47,7 +47,7 @@ const SubsectionModal = ({
     const handelEditSubsection = async (data) => {
         const currentValues = getValues();
         const formData = new FormData();
-        formData.append("SubsectionId", modalData._id);
+        formData.append("subSectionId", modalData.id || modalData._id);
         if (currentValues.lecture !== modalData.title) {
             formData.append("title", data.lecture);
         }
@@ -55,10 +55,10 @@ const SubsectionModal = ({
             formData.append("description", data.lectureDesc);
         }
         if (currentValues.lectureVideo !== modalData.videoUrl) {
-        formData.append("videoFile", data.lectureVideo);
+            formData.append("video", data.lectureVideo);
         }
 
-        formData.append("courseId", course._id);
+        formData.append("courseId", course.id || course._id);
         // console.log("formdata", [...formData]);
         const result = await updateSubSection(formData, token);
         if (result) {
@@ -85,8 +85,8 @@ const SubsectionModal = ({
         formData.append("sectionId", modalData);
         formData.append("title", data.lecture);
         formData.append("description", data.lectureDesc);
-        formData.append("videoFile", data.lectureVideo);
-        formData.append("courseId", course._id);
+        formData.append("video", data.lectureVideo);
+        formData.append("courseId", course.id || course._id);
 
         console.log("formdata", [...formData]);
         const result = await createSubSection(formData, token);

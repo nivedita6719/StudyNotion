@@ -1,14 +1,13 @@
 # =====================================================
-# Render Blueprint — StudyNotion backend + Postgres
+# Render Blueprint — StudyNotion backend
 # Deploy: Render Dashboard → New → Blueprint → pick this repo.
 # The frontend is deployed separately on Vercel (see vercel.json).
+#
+# Database: Render allows only ONE free Postgres per account. If that slot
+# is already used by another project, point this at an external free
+# Postgres instead (e.g. neon.tech) by filling in the DB_* vars below —
+# see DEPLOYMENT.md.
 # =====================================================
-
-databases:
-  - name: studynotion-db
-    databaseName: studynotion
-    plan: free
-    # Render keeps free databases for 30 days — upgrade before going live.
 
 services:
   - type: web
@@ -20,17 +19,19 @@ services:
     healthCheckPath: /api/v1/health
     autoDeploy: true
     envVars:
-      # ── Database (wired from the managed Postgres above) ──
+      # ── Database — fill in from your Postgres provider (e.g. Neon) ──
       - key: DB_HOST
-        fromDatabase: { name: studynotion-db, property: host }
+        sync: false
       - key: DB_PORT
-        fromDatabase: { name: studynotion-db, property: port }
+        value: "5432"
       - key: DB_NAME
-        fromDatabase: { name: studynotion-db, property: database }
+        sync: false
       - key: DB_USERNAME
-        fromDatabase: { name: studynotion-db, property: user }
+        sync: false
       - key: DB_PASSWORD
-        fromDatabase: { name: studynotion-db, property: password }
+        sync: false
+      - key: DB_PARAMS
+        value: "?sslmode=require"
 
       # ── Auth ──
       - key: JWT_SECRET

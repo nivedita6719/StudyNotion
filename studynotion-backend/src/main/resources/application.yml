@@ -10,9 +10,11 @@ spring:
     name: studynotion-backend
 
   datasource:
-    # Render's managed Postgres exposes host/port/db/user/password separately.
-    # For local dev the DATABASE_URL / DB_* defaults below point at localhost.
-    url: ${DATABASE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:studynotion}}
+    # Render's managed Postgres (or any external host, e.g. Neon) exposes
+    # host/port/db/user/password separately. DB_PARAMS lets you append query
+    # params like "?sslmode=require" (Neon requires this) without touching DB_NAME.
+    # For local dev the defaults below point at localhost with no SSL.
+    url: ${DATABASE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:studynotion}${DB_PARAMS:}}
     username: ${DB_USERNAME:${DB_USER:postgres}}
     password: ${DB_PASSWORD:password}
     driver-class-name: org.postgresql.Driver

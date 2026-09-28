@@ -28,27 +28,37 @@ Both are already verified to pass (and both Docker images build).
 
 ---
 
-## 1. Backend on Render
+## 1. Database
+
+Render allows only **one free Postgres per account**. If that slot is already used by another project, get a free Postgres elsewhere instead — this is what `render.yaml` expects by default (`DB_HOST` etc. are manual `sync:false` vars, not `fromDatabase`).
+
+**neon.tech** (recommended — free, no card, instant):
+1. Sign up → **New Project** → name it `studynotion` → pick a region.
+2. Project → **Connection Details** — copy: host (looks like `ep-xxxx-xxxx.region.aws.neon.tech`), database name, role/username, password.
+3. Keep these handy for the Render step below. Neon requires SSL — `render.yaml` already appends `?sslmode=require` via `DB_PARAMS`.
+
+If you'd rather use Render's own free Postgres and don't have one in use elsewhere, add back a `databases:` block to `render.yaml` (see git history) and wire `DB_*` with `fromDatabase` instead.
+
+## 2. Backend on Render
 
 ### Option A — Blueprint (recommended)
 1. Push this repo to GitHub.
-2. Render Dashboard → **New → Blueprint** → select the repo. Render reads [`render.yaml`](render.yaml) and creates:
-   - `studynotion-db` — free Postgres
-   - `studynotion-backend` — Docker web service, health-checked at `/api/v1/health`
+2. Render Dashboard → **New → Blueprint** → select the repo. Render reads [`render.yaml`](render.yaml) and creates `studynotion-backend` (Docker web service, health-checked at `/api/v1/health`).
 3. When prompted, fill the `sync:false` env vars:
    ```
+   DB_HOST, DB_NAME, DB_USERNAME, DB_PASSWORD    # from Neon (step 1)
    MAIL_USERNAME, MAIL_PASSWORD
    CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
    RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
    GEMINI_API_KEY
-   FRONTEND_URL              # set after step 2 — e.g. https://studynotion-xyz.vercel.app
+   FRONTEND_URL              # set after step 3 below — e.g. https://studynotion-xyz.vercel.app
    CORS_ALLOWED_ORIGINS      # same value (comma-separate if more than one)
    ```
-   The `DB_*` vars and `JWT_SECRET` are wired automatically.
+   `JWT_SECRET` is generated automatically.
 4. Deploy. First build ≈ 5-8 min. Backend URL: `https://studynotion-backend-XXXX.onrender.com`.
 
 ### Option B — manual
-New → Web Service → repo → Runtime **Docker**, Root Directory `studynotion-backend`, Health Check Path `/api/v1/health`. Create a Postgres separately and set `DB_HOST/DB_PORT/DB_NAME/DB_USERNAME/DB_PASSWORD` from its Info tab, plus all the secrets above and `JWT_SECRET`.
+New → Web Service → repo → Runtime **Docker**, Root Directory `studynotion-backend`, Health Check Path `/api/v1/health`. Set `DB_HOST/DB_PORT/DB_NAME/DB_USERNAME/DB_PASSWORD` from Neon (or your own Postgres), plus all the secrets above and `JWT_SECRET`.
 
 ### Notes
 - Free Postgres is deleted after 30 days and the web service sleeps after 15 min idle (first request ~30 s). Upgrade both before launch.
@@ -64,7 +74,7 @@ New → Web Service → repo → Runtime **Docker**, Root Directory `studynotion
 
 ---
 
-## 2. Frontend on Vercel
+## 3. Frontend on Vercel
 
 1. Vercel → **New Project** → import the repo.
 2. **Root Directory: `studynotion-frontend`**. Framework auto-detects as Create React App; [`vercel.json`](studynotion-frontend/vercel.json) supplies the SPA rewrite and a `CI=false` build (CRA fails the build on lint warnings otherwise).
@@ -75,14 +85,14 @@ New → Web Service → repo → Runtime **Docker**, Root Directory `studynotion
    (Overrides the committed `studynotion-frontend/.env.production` default. `REACT_APP_*` vars are baked in at build time — redeploy after changing.)
 4. Deploy. Copy the resulting URL.
 
-## 3. Wire the two together
+## 4. Wire the two together
 1. Render → `studynotion-backend` → Environment → set `FRONTEND_URL` and `CORS_ALLOWED_ORIGINS` to the Vercel URL → save (redeploys).
 2. Razorpay dashboard → add the Vercel URL to allowed domains if you have domain restrictions on.
 3. Hard-refresh the frontend and run the smoke test below.
 
 ---
 
-## 4. Local full stack (`docker compose`)
+## 5. Local full stack (`docker compose`)
 
 ```bash
 cp .env.example .env          # fill in real values
@@ -99,7 +109,7 @@ docker compose down && docker system prune -f && docker compose up --build
 
 ---
 
-## 5. Post-deploy smoke test
+## 6. Post-deploy smoke test
 
 | Flow | Check |
 |---|---|
@@ -116,7 +126,7 @@ Razorpay test cards: https://razorpay.com/docs/payments/payments/test-card-detai
 
 ---
 
-## 6. What changed in this production pass
+## 7. What changed in this production pass
 
 **Backend**
 - Fixed `LazyInitializationException` across `addSection`/`addSubSection`/`getReviews`/`getEnrolledCourses`/AI — every response builder now materialises collections inside its transaction; added `@Transactional` where it was missing.
